@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<title>Toransureto 2.0</title>
+<meta charset="UTF-8">
+<style>
+/* cacss */
+body{color:#000;background-color:#fff;margin:0;padding:1.5em;border:0;font-size:75%;}html,body,input,select,textarea{font-family:"Helvetica Neue",helvetica,arial,sans-serif;}pre,code,samp,kbd,var{font-family:monaco,"Courier New",courier,monospace;}a{text-decoration:none;}a:hover{text-decoration:underline;}img,a img{border:0;}h1,h2,h3,h4,h5,h6{margin:0;padding:0;}h1,h2,h3{line-height:1em;}h1{font-size:2.667em;margin-bottom:.5625em;}h2{font-size:2em;margin-bottom:.75em;}h3{font-size:1.5em;margin-bottom:1em;}h4{font-size:1.333em;margin-bottom:1.125em;line-height:1.125em;}h5{font-size:1.1667em;margin-bottom:1.2857em;line-height:1.2857em;}h6{font-size:1em;font-weight:bold;margin-bottom:1.5em;line-height:1.5em;}p{margin:0 0 1.5em;padding:0;line-height:1.5em;}caption{font-weight:bold;padding:.5em;}table{border-collapse:collapse;border-spacing:0;margin:0 0 1.5em;}th,td{vertical-align:top;padding:.3em .5em;line-height:1.5em;}pre{border:1px solid #ccc;margin:0 0 1.5em;padding:1em;white-space:pre;white-space:-moz-pre-wrap;white-space:-hp-pre-wrap;white-space:-o-pre-wrap;white-space:-pre-wrap;white-space:pre-wrap;word-wrap:break-word;}ul,ol{margin:0 0 1.5em 3em;padding:0;line-height:1.5em;}blockquote{margin:0 0 1.5em;padding:1em 1em .01em;border:1px solid #ccc;}dl{margin:0 0 1.5em;line-height:1.5em;}dt{margin:1.5em 0 0;font-weight:bold;}dd{margin:0 0 0 3em;}dfn{font-style:normal;font-weight:bold;}abbr{border-bottom:1px dotted;}form{margin:0;padding:0;}fieldset{margin:0 0 1.5em;border:1px solid #ccc;padding:1em;*padding-top:0;}legend{font-weight:bold;*margin-bottom:1em;}input,select,textarea,button{font-size:1em;max-width:100%;vertical-align:middle;margin:0;}textarea{overflow:auto;}input.button,button{padding:0 .5em;*overflow:visible;}article,aside,dialog,figure,footer,header,section,nav{display:block;}ul.fields{list-style:none;margin:0;padding:0;}ul.fields li{padding:.3em 0;}
+
+body{
+	padding: 10px;
+}
+h1{
+	font-size: 2em;
+}
+fieldset{
+	margin: 0 10px 10px 0;
+	border-radius: 4px;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+}
+fieldset:first-child{
+	width: 300px;
+	float: left;
+}
+fieldset p{
+	margin: 0;
+}
+#error{
+	color: red;
+	padding: 0 0 .5em;
+	display: none;
+}
+textarea{
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	width: 100%;
+	height: 8em;
+}
+textarea+input{
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	width: 100%;
+	padding: .2em .5em;
+	margin: .2em 0 0;
+}
+footer{
+	padding-top: 1em;
+	color: #666;
+	clear: left;
+}
+</style>
+<h1>Toransureto 2.0</h1>
+<form id="toransureto-form">
+<fieldset>
+<legend>Your Text</legend>
+<div id="error">Oops, something went wrong.</div>
+<textarea id="toransureto-text"></textarea>
+<input type="submit" class="button" value="Toransureto!">
+</fieldset>
+</form>
+<fieldset>
+<legend>Translated Text (English, Japanese, Romaji)</legend>
+<p id="translated-text"></p>
+</fieldset>
+<footer>Powered by <a href="http://translate.google.com/">Google Translate</a> and <a href="http://developer.yahoo.com/yql/">YQL</a>. Version 1.0 is at <a href="http://toransureto.appspot.com/">toransureto.appspot.com</a> (not working, deprecated).</footer>
+<script>
+var $ = function(id){
+	return document.getElementById(id);
+};
+var field = $('toransureto-text');
+var tField = $('translated-text');
+var tError = $('error');
+var query = 'select * from html where url="http://translate.google.com/translate_a/t?client=t&text={text}&sl=auto&tl={tl}" and xpath="//p"';
+var addScript = function(url){
+	var s = document.createElement('script');
+	s.src = url;
+	s.onload = function(){ // reduce memory usage
+		setTimeout(function(){
+			s.src = null;
+			document.body.removeChild(s);
+		}, 1000);
+	};
+	document.body.appendChild(s);
+};
+var showError = function(){
+	tError.style.display = 'block';
+};
+var renderTranslation = function(o){
+	var html = [];
+	for (var i=0, l=o.length; i<l; i++){
+		var oi = o[i];
+		html.push(oi.join('<br>'));
+	}
+	tField.innerHTML = html.join('<br><br>');
+};
+var _o = []; // store the output to be accessed in between callback functions
+var callbackja = function(data){
+	if (!data || !data.query){ showError(); return; }
+	var json = data.query.results.p.replace(/\n\s+/g, ' ').replace(/,,/g,',[],');
+	var d = JSON.parse(json);
+	var lang = d[2];
+	if (lang == 'ja'){ // japanese
+		var t = d[0][0];
+		_o.push([t[1], t[2]]);
+		var v = encodeURIComponent(t[0]);
+		var q = query.replace('{text}', v).replace('{tl}', 'en');
+		// translate ja to ja, and now to english
+		addScript('http://query.yahooapis.com/v1/public/yql?q=' + encodeURIComponent(q) + '&format=json&callback=callbacken');
+	} else if (lang == 'en'){ // english
+		var t = d[0];
+		var o = [];
+		for (var i=0, l=t.length; i<l; i++){
+			var ti = t[i];
+			o.push([ti[1], ti[0], ti[2]]);
+		}
+		renderTranslation(o);
+	} else { // other languages
+		var t = d[0], v = '';
+		for (var i=0, l=t.length; i<l; i++){
+			var ti = t[i];
+			_o.push([ti[1], ti[0], ti[2]]);
+			v += ti[0];
+		}
+		var q = query.replace('{text}', v).replace('{tl}', 'en');
+		// translate other to ja, now to english
+		addScript('http://query.yahooapis.com/v1/public/yql?q=' + encodeURIComponent(q) + '&format=json&callback=callbackother');
+	}
+};
+var callbacken = function(data){
+	if (!data || !data.query){ showError(); return };
+	var json = data.query.results.p.replace(/\n\s+/g, ' ').replace(/,,/g,',[],');
+	var d = JSON.parse(json);
+	var t = d[0];
+	var s = '';
+	for (var i=0, l=t.length; i<l; i++){
+		s += t[i][0] + ' ';
+	}
+	_o[0].unshift(s); // shift english to be on top
+	renderTranslation(_o);
+};
+var callbackother = function(data){
+	if (!data || !data.query){ showError(); return; }
+	var json = data.query.results.p.replace(/\n\s+/g, ' ').replace(/,,/g,',[],');
+	var d = JSON.parse(json);
+	var t = d[0];
+	for (var i=0, l=t.length; i<l; i++){
+		var _oi = _o[i];
+		// make sure it's in this order: other > english > japanese > romaji
+		var other = _oi.shift();
+		_oi.unshift(t[i][0]);
+		_oi.unshift(other);
+	}
+	renderTranslation(_o);
+};
+var tForm = $('toransureto-form');
+tForm.onsubmit = function(e){
+	_o = [];
+	if (e) e.preventDefault();
+	var v = encodeURIComponent(field.value);
+	location.hash = v;
+	var q = query.replace('{text}', v).replace('{tl}', 'ja');
+	addScript('http://query.yahooapis.com/v1/public/yql?q=' + encodeURIComponent(q) + '&format=json&callback=callbackja');
+	field.focus();
+	setTimeout(function(){
+		tError.style.display = 'none';
+	}, 1000);
+};
+field.onpaste = function(){
+	setTimeout(function(){
+		tForm.onsubmit();
+	}, 10);
+};
+field.addEventListener('keydown', function(e){
+	if (e.keyCode == 13){ // enter
+		e.preventDefault();
+		tForm.onsubmit();
+	}
+}, false);
+if (location.hash){
+	var hash = location.hash.slice(1);
+	field.value = hash;
+	tForm.onsubmit();
+}
+window.onhashchange = function(e){
+	var hash = location.hash.slice(1);
+	if (hash != field.value){
+		field.value = hash;
+		tForm.onsubmit();
+	}
+}
+</script>
