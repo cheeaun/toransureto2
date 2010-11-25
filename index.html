@@ -11,14 +11,27 @@ body{
 	background-color: #fafafa;
 	text-shadow: 0 1px #fff;
 }
+header{
+	margin: 0 0 1em;
+}
 h1{
 	font-size: 2em;
+	display: inline-block;
+	margin: 0;
+}
+.desc{
+	display: inline-block;
+	margin: 0;
+	color: #999;
 }
 fieldset{
 	margin: 0 10px 10px 0;
 	border-radius: 4px;
 	-moz-border-radius: 4px;
 	-webkit-border-radius: 4px;
+	box-shadow: 0 1px #fff;
+	-moz-box-shadow: 0 1px #fff;
+	-webkit-box-shadow: 0 1px #fff;
 }
 fieldset:first-child{
 	width: 320px;
@@ -63,8 +76,11 @@ body{
 	padding: 10px;
 	-webkit-text-size-adjust: 120%;
 }
-h1, footer{
+header, footer{
 	text-align: center;
+}
+.desc{
+	letter-spacing: -.5px;
 }
 fieldset:first-child{
 	width: 100%;
@@ -84,7 +100,10 @@ legend{
 
 }
 </style>
+<header>
 <h1>Toransureto 2.0</h1>
+<p class="desc">Any Language &rarr; English, Japanese &amp; Romaji </p>
+</header>
 <form id="toransureto-form">
 <fieldset>
 <legend>Your Text</legend>
@@ -205,13 +224,13 @@ field.onpaste = function(){
 		tForm.onsubmit();
 	}, 10);
 };
-field.addEventListener('keydown', function(e){
+field.onkeydown = function(e){
 	if (e.keyCode == 13){ // enter
 		e.preventDefault();
 		tForm.onsubmit();
 		field.blur();
 	}
-}, false);
+};
 if (location.hash){
 	var hash = decodeURIComponent(location.hash.slice(1));
 	field.value = hash;
