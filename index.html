@@ -151,7 +151,6 @@ var _o = []; // store the output to be accessed in between callback functions
 var callbackja = function(data){
 	if (!data || !data.query){ showError(); return; }
 	var json = data.query.results.p.replace(/\n\s+/g, ' ').replace(/,,/g,',[],').replace(/,,/g,',[],');
-	console.log(json);
 	var d = JSON.parse(json);
 	var lang = d[2];
 	if (lang == 'ja'){ // japanese
